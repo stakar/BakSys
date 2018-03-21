@@ -41,8 +41,8 @@ class BakardjianSystem(object):
     #Module 1: Blind Source Separation/ICA 
     def bss_ica(self):
         self.ica_file.load_data()
-        self.ica_file.extract_components()
-        self.ica_file.exclude_ica_components(components_to_exclude=self.components_to_exclude)
+        #self.ica_file.extract_components()
+        #self.ica_file.exclude_ica_components(components_to_exclude=self.components_to_exclude)
         return self.ica_file
     
     #Module 2: Narrow-band filters
@@ -93,20 +93,19 @@ class BakardjianSystem(object):
     #Module5: Integrator
     
     def integrator(self):
-        self.es_08Hz = np.divide((self.s_08Hz[0] + self.s_08Hz[1] + self.s_08Hz[2]),self.s_08Hz.shape[0])
-        self.es_14Hz = np.divide((self.s_14Hz[0] + self.s_14Hz[1] + self.s_14Hz[2]),self.s_14Hz.shape[0])
-        self.es_28Hz = np.divide((self.s_28Hz[0] + self.s_28Hz[1] + self.s_28Hz[2]),self.s_28Hz.shape[0]) 
-        return self.es_08Hz,self.es_14Hz,self.es_28Hz
+        self.s_08Hz = np.divide((self.s_08Hz[0] + self.s_08Hz[1] + self.s_08Hz[2]),self.s_08Hz.shape[0])
+        self.s_14Hz = np.divide((self.s_14Hz[0] + self.s_14Hz[1] + self.s_14Hz[2]),self.s_14Hz.shape[0])
+        self.s_28Hz = np.divide((self.s_28Hz[0] + self.s_28Hz[1] + self.s_28Hz[2]),self.s_28Hz.shape[0]) 
+        return self.s_08Hz,self.s_14Hz,self.s_28Hz
     
     #Module6: Normalization
     
     def normalizer(self):
-        self.s_08Hz = np.sum(self.es_08Hz)/np.sum((np.sum(self.s_08Hz[0]),
-                                     np.sum(self.s_08Hz[1]),np.sum(self.s_08Hz[2])))
-        self.s_14Hz = np.sum(self.es_14Hz)/np.sum((np.sum(self.s_14Hz[0]),
-                                     np.sum(self.s_14Hz[1]),np.sum(self.s_14Hz[2])))
-        self.s_28Hz = np.sum(self.es_28Hz)/np.sum((np.sum(self.s_28Hz[0]),
-                                     np.sum(self.s_28Hz[1]),np.sum(self.s_28Hz[2])))
+        
+        sum_of_signals = self.s_08Hz+self.s_14Hz+self.s_28Hz
+        self.s_08Hz = self.s_08Hz/sum_of_signals
+        self.s_14Hz = self.s_14Hz/sum_of_signals
+        self.s_28Hz = self.s_28Hz/sum_of_signals
         return self.s_08Hz,self.s_14Hz,self.s_28Hz
 
     #Bakardjian system, all functions at once
