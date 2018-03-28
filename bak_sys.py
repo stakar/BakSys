@@ -1,7 +1,8 @@
 
 """
-This file is containing a class, that perform all extraction modules for 
-Hovagim Bakardjian system that serves for classification of 
+This file is containing a class, that perform all modules for 
+Hovagim Bakardjian system that serves for feature extraction and command
+classification in SSVEP based BCI. 
 
 """
 
@@ -12,12 +13,7 @@ from bieg import ICAManager
 import matplotlib.pyplot as plt
 import math
 import scipy.signal as sig
-
-pre_data_path = "../data/subject1/SSVEP_8Hz_Trial1_SUBJ1.MAT"
-pre_data_path2 = "../data/subject1/SSVEP_14Hz_Trial1_SUBJ1.MAT"
-pre_data_path3 = "../data/subject1/SSVEP_28Hz_Trial3_SUBJ1.MAT"
-
-pierwsza = 'pierwsza_sekunda_14Hz.csv'
+from scipy.stats import mode
 
 #good set of components to exclude: 0,14,27,28,127
 
@@ -36,7 +32,6 @@ class BakardjianSystem(object):
         self.es_08Hz = es_08Hz
         self.es_14Hz = es_14Hz
         self.es_28Hz = es_28Hz
-        self.window_length = 15
         
     #Module 1: Blind Source Separation/ICA 
     def bss_ica(self):
@@ -87,7 +82,7 @@ class BakardjianSystem(object):
     def smoother(self):        
         for z in [self.s_08Hz,self.s_14Hz,self.s_28Hz]:
             for n in range(0,z.shape[0]):
-                z[n] = sig.savgol_filter(z[n],polyorder=2,window_length=self.window_length)
+                z[n] = sig.savgol_filter(z[n],polyorder=2,window_length=self.seconds)
         return self.s_08Hz,self.s_14Hz,self.s_28Hz
 
     #Module5: Integrator
@@ -110,16 +105,14 @@ class BakardjianSystem(object):
 
     #Bakardjian system, all functions at once
     
-    def bak_system_class(self):
-        self.bss_ica()
-        self.bank_of_filters()
-        self.variance_analyzer()
-        self.smoother()
-        self.integrator()
-        classified = max(self.normalizer())
-        dict_of_results = {self.s_08Hz:0,self.s_14Hz:1,self.s_28Hz:2}
-        classification = dict_of_results[classified]
-        return classification
+    def bak_class(self):
+        self.bak_system()
+        c_ = np.zeros(self.s_08Hz.shape[0])
+        for n in range(len(c_)):
+            dict_classes = {self.s_08Hz[n]:0,self.s_14Hz[n]:1,self.s_28Hz[n]:2}
+            c_[n] = max(np.array([self.s_08Hz[n],self.s_14Hz[n],self.s_28Hz[n]]))
+            c_[n] = dict_classes[c_[n]]
+        return c_
     
     def bak_system(self):
         self.bss_ica()
