@@ -3,64 +3,15 @@
 # classification in SSVEP based BCI.
 # Also, it has an built-in FFT features extractor
 
-# Version 3.1
+# Version 3.2
 
 import numpy as np
-import mne
 import pandas as pd
-from bieg import ICAManager
 import matplotlib.pyplot as plt
 import scipy.signal as sig
 from scipy.stats import mode
-from mne.preprocessing import ICA
-
+from amuse import AMUSE
 from sklearn.cross_decomposition import CCA
-
-class AMUSE:
-
-    def __init__(self, x, n_sources, tau):
-        
-        """
-        Class for performing AMUSE algorithm, for artifact rejection
-        
-        Source: http://dspandmath.blogspot.com/2015/12/blind-source-separation-with-python.html
-        """
-
-        self.x = x
-        self.n_sources = n_sources
-        self.tau = tau
-        self.__calc()
-        
-    def __calc(self):
-
-       #BSS using eigenvalue value decomposition
-
-       #Program written by A. Cichocki and R. Szupiluk at MATLAB
-      
-        R, N = self.x.shape
-        Rxx = np.cov(self.x)
-        U, S, U = np.linalg.svd(Rxx)
-        
-        if R > self.n_sources:
-            noise_var = np.sum(self.x[self.n_sources+1:R+1])/(R - (self.n_sources + 1) + 1)
-        else:
-            noise_var = 0
-        
-        h = U[:,0:self.n_sources]
-        T = np.zeros((R, self.n_sources))
-        
-        for m in range(0, self.n_sources):
-            T[:, m] = np.dot((S[m] - noise_var)**(-0.5) ,  h[:,m])
-        
-        T = T.T
-        y = np.dot(T, self.x)
-        R1, N1 = y.shape
-        Ryy = np.dot(y ,  np.hstack((np.zeros((R1, self.tau)), y[:,0:N1 - self.tau])).T) / N1
-        Ryy = (Ryy + Ryy.T)/2
-        D, B  = np.linalg.eig(Ryy)
-        
-        self.W = np.dot(B.T, T)
-        self.sources = np.dot(self.W, self.x)
 
 class BakardjianSystem(object):
 
@@ -158,7 +109,6 @@ class BakardjianSystem(object):
                 Frequency of sampling
             
         """
-        
         bplowcut = low/(freq*0.5)
         bphighcut = high/(freq*0.5) 
         [b,a] = sig.butter(N=3,Wn=[bplowcut,bphighcut],btype='bandpass')
@@ -205,17 +155,6 @@ class BakardjianSystem(object):
             Z = self.matfilt(x,27.9,28.1,self.freq)
             self.data = np.array([X,Y,Z])
             
-        
-#     def bank_of_filters(self):
-        
-#         x = self.data
-#         X = self.matfilt(x,7.9,8.1,self.freq)
-#         Y = self.matfilt(x,13.9,14.1,self.freq)
-#         self.data = np.array([X,Y])
-        
-#         if self.threeclass == True:
-#             Z = self.matfilt(x,27.9,28.1,self.freq)
-#             self.data = np.column_stack((self.data[0],Z))
         
     def variance_analyzer(self):
         
@@ -331,29 +270,18 @@ class BakardjianSystem(object):
         else:
             print("Don't filter the data before FFT extraction!")
 
-# TODO: In bank of filters, change the way of creating threeclass
-# data, so it does not create new dataset, but rather just add
-# Z array to dataset
-# TODO: Extraction of morphological and FFT features
-# TODO: Error handling
-# TODO: Separate AMUSE, it should have been in another file and
-# jus imported
-
 if __name__ is "__main__":
-    bs = BakardjianSystem("subject1/sd14Hz3sec/14Hz3sec0prt4trial.csv",
+    bs = BakardjianSystem("../subject1/sd14Hz3sec/14Hz3sec0prt4trial.csv",
                           freq = 256,channels=[15,23,28],
                           extract=True,
                           threeclass=True,
                          seconds =3)
     bs.load_data()
     bs.run()
-    # bs.bank_of_filters()
-    # dt = bs.extractFFT()[0]
-    # dt = dt[:round(len(dt)/2)]
-    # t = np.linspace(0,len(dt),len(dt))
-    # plt.plot(t,dt)
-    # plt.show()
+    print(bs.data.shape)
 
-    # dt[7:10]
-    # bs.featFFT
-    bs.data
+# TODO: In bank of filters, change the way of creating threeclass
+# data, so it does not create new dataset, but rather just add
+# Z array to dataset
+# TODO: Extraction of morphological and FFT features
+#TODO: Error handling
