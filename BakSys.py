@@ -46,7 +46,7 @@ class BakardjianSystem(object):
         channels : list
             channels on which analysis is supposed to be performed
 
-        twoclass : boolean
+        threeclass : boolean
             decision whether perform two- or three class classification.
 
         seconds : int
@@ -146,6 +146,10 @@ class BakardjianSystem(object):
 
     def bank_of_filters(self):
 
+        """
+        Filter each channel using narrow bandpass filters.
+        """
+
         x = self.data
         X = self.__matfilt(x,7.9,8.1,self.freq)
         Y = self.__matfilt(x,13.9,14.1,self.freq)
@@ -158,9 +162,17 @@ class BakardjianSystem(object):
 
     def variance_analyzer(self):
 
+        """
+        Extract energy variance of signal.
+        """
+
         self.data = abs(self.data)
 
     def smoothing(self):
+
+        """
+        Smooth the data
+        """
 
         F,C,P = self.data.shape
         X = np.zeros((F,C,P))
@@ -176,6 +188,10 @@ class BakardjianSystem(object):
 
     def integrating(self):
 
+        """
+        Integrate channels for each analyzed frequency.
+        """
+
         data = self.data
         F,C,P = data.shape
         result = np.zeros((F,1,P))
@@ -188,6 +204,10 @@ class BakardjianSystem(object):
 
 
     def normalize(self):
+
+        """
+        Normalize the data.
+        """
 
         F,C,P = self.data.shape
         S = np.zeros((1,C,P))
@@ -226,6 +246,10 @@ class BakardjianSystem(object):
 
     def extractmorph(self):
 
+        """
+        Extract morphological features from data.
+        """
+
         bs.data.shape
 
         for n in range(3):
@@ -242,44 +266,44 @@ class BakardjianSystem(object):
         Extract frequency features from data.
 
         """
+        #Firstly, we need to prepare the
+        if self.threeclass == False:
+            n_class = 2
+            freq = [[7,8,9],[13,14,15]]
+        else:
+            n_class = 3
+            freq = [[7,8,9],[13,14,15],[27,28,29]]
 
         X = self.data
-        C,P = X.shape
-
-        X = self.data
-
         C,P = X.shape
         F = self.freq
-
         Y = np.zeros((C,F))
+        Ymax = np.zeros((C,n_class))
 
-        Ymax = np.zeros((3))
-
+        #TODO Fix the loop below
 
         for n in range(C):
-            Y[n] = (2*abs(np.fft.fft(sig.hamming(len(X[n]))*X[n],
-                                     self.freq))/self.freq)
+            Y[n] = (2*abs(np.fft.fft(sig.hamming(len(X[n]))*X[n],F))/F)
 
-            self.featFFT = np.array([Y[n][7:10],Y[n][13:16]])
+            for i in range(n_class):
+                Y
 
-            if self.threeclass == True:
-                self.featFFT = np.vstack((self.featFFT,[Y[n][27:30]]))
 
-        #     Y[n] = np.max(Y[n])
-        # return Y
 
-if __name__ is '__main__':
-    bs = BakardjianSystem("../subject1/sd14Hz3sec/14Hz3sec0prt4trial.csv",
-                          freq = 256,channels=[15,23,28],
-                          extract=True,
-                          threeclass=True,
-                         seconds =3)
-    bs.load_data()
-    # bs.run()
-    # print(bs.data.shape)
-    bs.extractFFT()
+        return Ymax
 
-    print(bs.featFFT.shape)
+# if __name__ is "__main__":
+bs = BakardjianSystem("../subject1/sd14Hz3sec/14Hz3sec0prt4trial.csv",
+                      freq = 256,channels=[15,23,28],
+                      extract=True,
+                      threeclass=True,
+                     seconds =3)
+bs.load_data()
+# bs.run()
+# print(bs.data.shape)
+
+print(bs.extractFFT())
+print(bs.featFFT)
 
 # TODO: In bank of filters, change the way of creating threeclass
 # data, so it does not create new dataset, but rather just add
