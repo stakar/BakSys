@@ -3,7 +3,7 @@
 # classification in SSVEP based BCI.
 # Also, it has an built-in FFT features extractor
 
-# Version 3.2
+# Version 3.3.1
 
 import numpy as np
 import pandas as pd
@@ -159,7 +159,6 @@ class BakardjianSystem(object):
             Z = self.__matfilt(x,27.9,28.1,self.freq)
             self.data = np.array([X,Y,Z])
 
-
     def variance_analyzer(self):
 
         """
@@ -255,10 +254,20 @@ class BakardjianSystem(object):
         for n in range(3):
             y = np.max(bs.data[n])
             t = np.min(bs.data[n])
-            dif = y-t
-            res = np.array((y,t,dif,s))
+        dif = y-t
+        self.morphfeat = np.array((y,t,dif,s))
 
-        return res
+    @staticmethod
+    def __extractpeaks(X,peaks):
+        """
+        Extract peaks from data.
+        """
+        Y = X[:,[peaks]]
+        y = np.zeros((3))
+        for n in range(Y.shape[2]):
+            y[n] =  np.mean(Y[:,[0],[n]])
+
+        return np.max(y)
 
     def extractFFT(self):
 
@@ -266,44 +275,62 @@ class BakardjianSystem(object):
         Extract frequency features from data.
 
         """
-        #Firstly, we need to prepare the
-        if self.threeclass == False:
-            n_class = 2
-            freq = [[7,8,9],[13,14,15]]
-        else:
-            n_class = 3
-            freq = [[7,8,9],[13,14,15],[27,28,29]]
+        #Firstly, we need to prepare
+        freq = [[7,8,9],[13,14,15],[27,28,29]]
 
         X = self.data
-        C,P = X.shape
+        C = X.shape[0]   #C is number of channels
         F = self.freq
         Y = np.zeros((C,F))
-        Ymax = np.zeros((C,n_class))
-
-        #TODO Fix the loop below
-
+        #Next, we perform Fourier Transformation on data from every channel
         for n in range(C):
             Y[n] = (2*abs(np.fft.fft(sig.hamming(len(X[n]))*X[n],F))/F)
 
-            for i in range(n_class):
-                Y
+        l = self.__extractpeaks(Y,[7,8,9])    #low frequencies
+        m = self.__extractpeaks(Y,[13,14,15]) #medium frequencies
+        self.featFFT = np.array([l,m])
+        if self.threeclass == True:
+            h = self.__extractpeaks(Y,[27,28,29]) #high frequencies
+            self.featFFT = np.hstack((self.featFFT,h))
 
+    def bs_classifier(self):
 
+        """
+        Built-in classifier
+        """
 
-        return Ymax
+        X = self.data.squeeze()
+        C,P = X.shape
+        classified = np.zeros((P))
+
+        if self.threeclass == False:
+            for n in range(P):
+                dict_classes = {X[0,n]:0, X[1,n]:1}
+                val_max = np.max(X[:,n])
+                classified[n] = dict_classes[val_max]
+
+        if self.threeclass == True:
+            for n in range(P):
+                dict_classes = {X[0,n]:0, X[1,n]:1, X[2,n]:2}
+                val_max = np.max(X[:,n])
+                classified[n] = dict_classes[val_max]
+
+        print(classified)
+
 
 # if __name__ is "__main__":
-bs = BakardjianSystem("../subject1/sd14Hz3sec/14Hz3sec0prt4trial.csv",
+bs = BakardjianSystem("../subject1/sd28Hz1sec/28Hz1sec0prt2trial.csv",
                       freq = 256,channels=[15,23,28],
                       extract=True,
                       threeclass=True,
                      seconds =3)
 bs.load_data()
-# bs.run()
-# print(bs.data.shape)
+bs.run()
+print(bs.data.shape)
+bs.bs_classifier()
 
-print(bs.extractFFT())
-print(bs.featFFT)
+# bs.extractFFT()
+# print(bs.featFFT)
 
 # TODO: In bank of filters, change the way of creating threeclass
 # data, so it does not create new dataset, but rather just add
