@@ -66,7 +66,7 @@ class create_dataset():
         self.go_path()
         self.create_placeholder_array()
         self.read_write()
-        np.savez('dataset.npz',self.data)
+        np.save('dataset.npy',self.data)
 
 
 
