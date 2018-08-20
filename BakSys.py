@@ -3,7 +3,7 @@
 # classification in SSVEP based BCI.
 # Also, it has an built-in FFT features extractor
 
-# Version 3.3.1
+# Version 3.4
 
 import numpy as np
 import pandas as pd
@@ -11,11 +11,26 @@ import matplotlib.pyplot as plt
 import scipy.signal as sig
 from scipy.stats import mode
 from amuse import AMUSE
-from sklearn.cross_decomposition import CCA
+
+
+def load_data_path(path,sep=' '):
+    """
+    Load data from input path and extract artifacts.
+
+    Parameters
+    ----------
+    path : str
+        an input path that leads to the EEG data on which operations should be
+        performed. Data should be with csv or tsv extension,
+        with shape [n_channels,n_probes]
+    """
+    data = np.loadtxt(path,delimiter=sep)
+    return data
+
 
 class BakardjianSystem(object):
 
-    def __init__(self, path, extract=False, freq=256,
+    def __init__(self, extract=False, freq=256,
                  sep = ' ', channels = [15,23,28],threeclass = True,
                  seconds = 1):
         """
@@ -26,10 +41,6 @@ class BakardjianSystem(object):
 
         Parameters
         ----------
-
-        path : str
-            an input path that leads to the EEG data on which operations should be
-            performed. Data should be with csv or tsv extension, with shape [n_channels,n_probes]
 
         sep : str
             a separator used in data that are supposed to be load
@@ -55,6 +66,13 @@ class BakardjianSystem(object):
         Attributes
         ----------
 
+        data : numpy array
+
+        featFFT : numpy array
+
+        morphfeat : numpy array
+
+        decision : int
 
         References
         ----------
@@ -65,7 +83,6 @@ class BakardjianSystem(object):
         """
 
         self.self = self
-        self.path = path
         self.extract = extract
         self.freq = freq
         self.channels = channels
@@ -73,19 +90,25 @@ class BakardjianSystem(object):
         self.threeclass = threeclass
         self.seconds = seconds
 
-    def load_data(self):
-        """
-        Load data from input path and extract artifacts.
-
-        """
-        data = np.loadtxt(self.path,delimiter=self.sep)
+    @staticmethod
+    def _extract_components(data):
+        amuse = AMUSE(data,data.shape[0],1)
+        return amuse.sources
 
         if self.extract == True:
-            amuse = AMUSE(data,data.shape[0],1)
-            data = amuse.sources
+            data = self._extract_components(data)
 
         self.data = data[self.channels,:]
 
+    def load_data(self,data):
+        """
+        Load data from input and extract artifacts.
+
+        """
+        if self.extract == True:
+            data = self._extract_components(data)
+
+        self.data = data[self.channels,:]
 
     @staticmethod
     def __filtering(data,low,high,freq):
@@ -217,13 +240,13 @@ class BakardjianSystem(object):
         for n in range(F):
             self.data[n] = self.data[n]/S
 
-    def run(self):
+    def fit(self,data):
         """
         This method performs all modules from Bakardjian System.
         """
         ### 1. Firstly, load the data and extract components; those are modules 1. and 2.
         ### from original Bakardjian System
-        bs.load_data()
+        bs.load_data(data)
 
         ### 2. Secondly, filter the data on two or three frequencies, depending on what
         ### classification type you focuse on.
@@ -243,60 +266,15 @@ class BakardjianSystem(object):
 
         ### 7. Output is a data attribute.
 
-    def extractmorph(self):
+    def fit_transform(self):
+
+        self.fit()
+        return(self.data)
+
+    def predict(self):
 
         """
-        Extract morphological features from data.
-        """
-
-        bs.data.shape
-
-        for n in range(3):
-            y = np.max(bs.data[n])
-            t = np.min(bs.data[n])
-        dif = y-t
-        self.morphfeat = np.array((y,t,dif,s))
-
-    @staticmethod
-    def __extractpeaks(X,peaks):
-        """
-        Extract peaks from data.
-        """
-        Y = X[:,[peaks]]
-        y = np.zeros((3))
-        for n in range(Y.shape[2]):
-            y[n] =  np.mean(Y[:,[0],[n]])
-
-        return np.max(y)
-
-    def extractFFT(self):
-
-        """
-        Extract frequency features from data.
-
-        """
-        #Firstly, we need to prepare
-        freq = [[7,8,9],[13,14,15],[27,28,29]]
-
-        X = self.data
-        C = X.shape[0]   #C is number of channels
-        F = self.freq
-        Y = np.zeros((C,F))
-        #Next, we perform Fourier Transformation on data from every channel
-        for n in range(C):
-            Y[n] = (2*abs(np.fft.fft(sig.hamming(len(X[n]))*X[n],F))/F)
-
-        l = self.__extractpeaks(Y,[7,8,9])    #low frequencies
-        m = self.__extractpeaks(Y,[13,14,15]) #medium frequencies
-        self.featFFT = np.array([l,m])
-        if self.threeclass == True:
-            h = self.__extractpeaks(Y,[27,28,29]) #high frequencies
-            self.featFFT = np.hstack((self.featFFT,h))
-
-    def bs_classifier(self):
-
-        """
-        Built-in classifier
+        Built-in classifier.
         """
 
         X = self.data.squeeze()
@@ -314,27 +292,24 @@ class BakardjianSystem(object):
                 dict_classes = {X[0,n]:0, X[1,n]:1, X[2,n]:2}
                 val_max = np.max(X[:,n])
                 classified[n] = dict_classes[val_max]
+        y = int(mode(classified)[0][0])
 
-        print(classified)
+        self.decision = y
 
 
 # if __name__ is "__main__":
-bs = BakardjianSystem("../subject1/sd28Hz1sec/28Hz1sec0prt2trial.csv",
-                      freq = 256,channels=[15,23,28],
+bs = BakardjianSystem(freq = 256,channels=[15,23,28],
                       extract=True,
                       threeclass=True,
                      seconds =3)
-bs.load_data()
-bs.run()
-print(bs.data.shape)
-bs.bs_classifier()
+data = load_data_path('../subject1/sd14Hz1sec/14Hz1sec12prt1trial.csv')
+bs.fit(data)
+bs.predict()
+print(bs.decision)
 
-# bs.extractFFT()
-# print(bs.featFFT)
 
 # TODO: In bank of filters, change the way of creating threeclass
 # data, so it does not create new dataset, but rather just add
 # Z array to dataset
-# TODO: Extraction of morphological and FFT features
+# TODO: Extraction of morphological features
 # TODO: Error handling
-# TODO: Bakardjian classifier
