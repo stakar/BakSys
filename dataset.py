@@ -1,13 +1,14 @@
 import numpy as np
 import os
 import re
-import bunch
+from bunch import Bunch
 
 class create_dataset():
 
-    def __init__(self):
+    def __init__(self,target = {"8":0,"14":1,"28":2},freq=256):
         self = self
-        self._target = {"8":0,"14":1,"28":2}
+        self._target = target
+        self.freq = freq
 
     def go_path(self):
         """
@@ -24,6 +25,7 @@ class create_dataset():
         form of additional column.
         """
         x = np.loadtxt(path,delimiter = ',')
+        x = x[5*self.freq:20*self.freq]
         re_sult = re.search('(?P<freq>\d+)Hz',path)
         f = re_sult.group('freq')
         target = self._target[f]
@@ -75,13 +77,9 @@ def load_dataset():
     """
     path = '/home/%s/data/dataset.npy' %os.environ['USER']
     data = np.load(path)
-    dataset = bunch.Bunch()
-    dataset.data = data[:,:128]
-    dataset.target = data[:,128]
-    return dataset
-
-
-
+    X = data[:,:128]
+    y = data[:,128]
+    return X,y
 # if __name__ == "__main__":
 #     dc = create_dataset()
 #     dc.run()
