@@ -1,6 +1,7 @@
 import numpy as np
 import os
 import re
+import bunch
 
 class create_dataset():
 
@@ -68,9 +69,21 @@ class create_dataset():
         self.read_write()
         np.save('dataset.npy',self.data)
 
+def load_dataset():
+    """
+    This function loads created dataset.
+    """
+    path = '/home/%s/data/dataset.npy' %os.environ['USER']
+    data = np.load(path)
+    dataset = bunch.Bunch()
+    dataset.data = data[:,:128]
+    dataset.target = data[:,128]
+    return dataset
+
 
 
 # if __name__ == "__main__":
-dc = create_dataset()
-dc.run()
-#TODO Figure out how to create first array, complete creating array function
+#     dc = create_dataset()
+#     dc.run()
+#     data = load_dataset()
+#     print(data.data.shape)
