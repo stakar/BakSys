@@ -27,7 +27,8 @@ def chunking(features,target,time_window=1,freq=256):
     C = features.shape[1]
     F = freq
     S = time_window
-    X = np.zeros(4) #placeholder-array for results
+    X = np.zeros(3) #placeholder-array for results
+    t = np.zeros(1)
 
     for n in classes:
         y = features[np.where(target == n)]
@@ -35,14 +36,15 @@ def chunking(features,target,time_window=1,freq=256):
         for z in range(n_parts):
             part = y[(F*z):(F*(S+z))]
             tmp = FeatFFT().fit_transform(part)
-            tmp = np.hstack((tmp,n))
             X = np.vstack((X,tmp))
-    result = X[1:]
+            t = np.vstack((t,n))
+    result = (X[1:],t[1:])
+
     return result
 
 if __name__ == "__main__":
     from dataset import load_dataset
     feat,target = load_dataset()
     chunk = chunking(feat,target,time_window=2)
-    print(chunk.shape)
-    print(chunk[-10:])
+    print(chunk[1].shape)
+    print(chunk[1][-10:])
