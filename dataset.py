@@ -1,7 +1,6 @@
 import numpy as np
 import os
 import re
-from bunch import Bunch
 
 class create_dataset():
 
@@ -73,15 +72,19 @@ class create_dataset():
 
 def load_dataset():
     """
-    This function loads created dataset.
+    This function loads created dataset. Returns X (array of features) and y (
+    array of target)
     """
     path = '/home/%s/data/dataset.npy' %os.environ['USER']
     data = np.load(path)
     X = data[:,:128]
     y = data[:,128]
     return X,y
+
+
+
 # if __name__ == "__main__":
-#     dc = create_dataset()
-#     dc.run()
-#     data = load_dataset()
-#     print(data.data.shape)
+    # dc = create_dataset()
+    # dc.run()
+    # data = load_dataset()
+    # print(data[1].shape)
