@@ -77,8 +77,8 @@ def load_dataset():
     """
     path = '/home/%s/data/dataset.npy' %os.environ['USER']
     data = np.load(path)
-    X = data[:,:128]
-    y = data[:,128]
+    X = data[:,:-1]
+    y = data[:,-1]
     return X,y
 
 
