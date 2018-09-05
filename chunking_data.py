@@ -33,7 +33,7 @@ def chunking_FFT(features,target,time_window=1,freq=256):
 
     for n in classes:
         y = features[np.where(target == n)]
-        n_parts = int(y.shape[0]/freq)
+        n_parts = int(y.shape[0]/(F*S))
         for z in range(n_parts):
             part = y[(F*z):(F*(S+z))]
             tmp = FeatFFT().fit_transform(part)
