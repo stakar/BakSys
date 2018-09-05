@@ -269,7 +269,7 @@ class BakardjianSystem(object):
     def fit_transform(self,data):
 
         self.fit(data)
-        return(data)
+        return(self.data)
 
     def predict(self):
 
@@ -306,7 +306,7 @@ data = load_data_path('../subject1/sd14Hz1sec/14Hz1sec12prt1trial.csv')
 # bs.fit(data)
 # bs.predict()
 # print(bs.decision)
-print(bs.fit_transform(data)[0])
+# print(bs.fit_transform(data)[0])
 
 # TODO: In bank of filters, change the way of creating threeclass
 # data, so it does not create new dataset, but rather just add
