@@ -246,30 +246,30 @@ class BakardjianSystem(object):
         """
         ### 1. Firstly, load the data and extract components; those are modules 1. and 2.
         ### from original Bakardjian System
-        bs.load_data(data)
+        self.load_data(data)
 
         ### 2. Secondly, filter the data on two or three frequencies, depending on what
         ### classification type you focuse on.
-        bs.bank_of_filters()
+        self.bank_of_filters()
 
         ### 3. Extract energy band variance
-        bs.variance_analyzer()
+        self.variance_analyzer()
 
         ### 4. Smooth the data using Savitzky-GOlay 2nd order filter
-        bs.smoothing()
+        self.smoothing()
 
         ### 5. Integrate channels
-        bs.integrating()
+        self.integrating()
 
         ### 6. Normalize the data
-        bs.normalize()
+        self.normalize()
 
         ### 7. Output is a data attribute.
 
-    def fit_transform(self):
+    def fit_transform(self,data):
 
-        self.fit()
-        return(self.data)
+        self.fit(data)
+        return(data)
 
     def predict(self):
 
@@ -303,10 +303,10 @@ bs = BakardjianSystem(freq = 256,channels=[15,23,28],
                       threeclass=True,
                      seconds =3)
 data = load_data_path('../subject1/sd14Hz1sec/14Hz1sec12prt1trial.csv')
-bs.fit(data)
-bs.predict()
-print(bs.decision)
-
+# bs.fit(data)
+# bs.predict()
+# print(bs.decision)
+print(bs.fit_transform(data)[0])
 
 # TODO: In bank of filters, change the way of creating threeclass
 # data, so it does not create new dataset, but rather just add
