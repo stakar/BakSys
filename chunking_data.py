@@ -43,7 +43,7 @@ def chunking_FFT(features,target,time_window=1,freq=256):
 
     return result
 
-def load_chunked_dataset():
+def load_chunked_datasetFFT():
     """
     This function loads dataset as load_dataset function, then chunks it and ret
     urns it.
@@ -90,17 +90,31 @@ def chunking(features,target,time_window=1,freq=256):
 
     X = X[1:]
     t = t[1:]
-    X = X.reshape(t.shape[0],(F*S),C)
+    X = X.reshape(t.shape[0],C,(F*S))
     result = (X,t)
 
     return result
 
+def load_chunked_dataset(time_window=1,freq=256):
+    """
+    This function loads dataset as load_dataset function, then chunks it and ret
+    urns it.
+    """
+    X,y = load_dataset()
+    features,target = chunking(X,y,time_window,freq)
+    return features,target
+
+
 
 if __name__ == "__main__":
-    from dataset import load_dataset
-    feat,target = load_dataset()
-    chunk = chunking(feat,target,time_window=3)
-    print(chunk[0].shape)
-    print(chunk[0][-10:])
-    print(chunk[1].shape)
-    print(chunk[1][-10:])
+    # from dataset import load_dataset
+    # feat,target = load_dataset()
+    # chunk = chunking(feat,target,time_window=3)
+    # print(chunk[0].shape)
+    # print(chunk[0][-10:])
+    # print(chunk[1][-10:])
+    # print(chunk[1].shape)
+    X,y = load_chunked_dataset()
+    print("Chunked dataset has shapes: {},{}".format(X.shape,y.shape))
+    # X,y = load_chunked_datasetFFT()
+    # print("Chunked freq features dataset has shapes: {},{}".format(X.shape,y.shape))
