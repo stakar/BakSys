@@ -33,17 +33,17 @@ class BakSysCCA(object):
         self.seconds = seconds
         self.target_freq = target_freq
 
-        # self.bs = BakSys(extract = self.extract, freq = self.freq,sep = self.sep,
-        # channels = self.channels,threeclass=self.threeclass,
-        # seconds=self.seconds)
-        self.bs = BakSys(threeclass=self.threeclass)
+        self.bs = BakSys(extract = self.extract, freq = self.freq,sep = self.sep,
+        channels = self.channels,threeclass=self.threeclass,
+        seconds=self.seconds)
 
-    @staticmethod
-    def _reference(target,seconds = 1,freq = 256,harmonics=2):
+    def _reference(self,target,harmonics=2):
 
         """ Simple reference generator, takes as an input targetted frequency,
         then generates reference signal ("perfect" one)"""
 
+        seconds = self.seconds
+        freq = self.freq
         t = np.linspace(0,seconds,(seconds*freq))
         sin = np.sin(2*np.pi*target*t)
         cos = np.cos(2*np.pi*target*t)
@@ -120,20 +120,20 @@ class BakSysCCA(object):
         for n in range(N):
             chunk = self.bs.fit_transform(test[n])
             result[n] = self.classify(chunk)
-        print(result.shape)
+        
         result = result[result == target].shape[0]/N
         return result
 
 if __name__ == '__main__':
     from chunking_data import load_chunked_dataset
-    X,y = load_chunked_dataset()
+    X,y = load_chunked_dataset(time_window = 3)
     target = [0,1]
     tar_freq = [8,14]
-    dataset_two_class = X[np.where((y != 2)),:][0]
-    target_two_class = y[np.where((y != 2)),:][0]
+    X = X[np.where((y != 2)),:][0]
+    y = y[np.where((y != 2)),:][0]
 
-    cca = BakSysCCA(threeclass=False)
-    print(cca.score(dataset_two_class,target_two_class))
+    cca = BakSysCCA(extract = True,seconds = 3,threeclass=False)
+    print(cca.score(X,y))
 
 # TODO parameters changes for two class classification. So, for fuck sake,
 # you need to explore further the data in order to find proper one.
